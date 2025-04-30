@@ -3,7 +3,8 @@ const mongoose = require("mongoose");
 const profileSchema = new mongoose.Schema({
     userId: { type: String, require: true, unique: true },
     serverId: { type: String, require: true },
-    balance: { type: Number, default: 100000 }
+    registered: { type: Boolean, default: false },
+    balance: { type: Number, default: 0 }
 });
 
 const model = mongoose.model("TarkovCasino", profileSchema);

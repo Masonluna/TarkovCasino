@@ -47,13 +47,15 @@ module.exports = {
         const adminSubcommand = interaction.options.getSubcommand();
         const user = interaction.options.getUser("user");
         const amount = interaction.options.getInteger("amount");
+        const nickname = interaction.member?.nickname;
+        const username = nickname || user.globalName || user.username
 
         // Get the user's profile data from the database
         const profileData = await profileModel.findOne({ userId: user.id });
 
         if (!profileData) {
             return await interaction.editReply(
-                `No profile found for ${user.username}.`
+                `No profile found for ${user.globalName}.`
             );
         }
 
@@ -71,7 +73,7 @@ module.exports = {
 
             // Mentioning the user and replying with the updated balance
             await interaction.editReply(
-                `${amount} rubles have been added to ${user}'s balance. New balance: **${updatedBalance} rubles**.`
+                `${amount} rubles have been added to ${username}'s balance. New balance: **${updatedBalance} rubles**.`
             );
         }
 
@@ -79,7 +81,7 @@ module.exports = {
             // Check if the user has enough gold to subtract
             if (currentBalance < amount) {
                 return await interaction.editReply(
-                    `${user} does not have enough rubles to subtract ${amount}. Current balance: **${currentBalance} gold**.`
+                    `${username} does not have enough rubles to subtract ${amount}. Current balance: **${currentBalance} gold**.`
                 );
             }
 
@@ -94,7 +96,7 @@ module.exports = {
 
             // Mentioning the user and replying with the updated balance
             await interaction.editReply(
-                `${amount} rubles have been removed from ${user}'s balance. New balance: **${updatedBalance} gold**.`
+                `${amount} rubles have been removed from ${username}'s balance. New balance: **${updatedBalance} gold**.`
             );
         }
     },
