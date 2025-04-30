@@ -62,7 +62,7 @@ module.exports = {
         const currentBalance = profileData.balance;
 
         if (adminSubcommand === "add") {
-            // Adding gold to the user's balance
+            // Adding rubles to the user's balance
             await profileModel.findOneAndUpdate(
                 { userId: user.id },
                 { $inc: { balance: amount } }
@@ -73,19 +73,19 @@ module.exports = {
 
             // Mentioning the user and replying with the updated balance
             await interaction.editReply(
-                `${amount} rubles have been added to ${username}'s balance. New wallet: **${updatedBalance} rubles**.`
+                `${amount} rubles have been added to ${username}'s balance. New wallet: **${updatedBalance.toLocaleString()} rubles**.`
             );
         }
 
         if (adminSubcommand === "subtract") {
-            // Check if the user has enough gold to subtract
+            // Check if the user has enough rubles to subtract
             if (currentBalance < amount) {
                 return await interaction.editReply(
-                    `${username} does not have enough rubles to subtract ${amount}. Current wallet: **${currentBalance} gold**.`
+                    `${username} does not have enough rubles to subtract ${amount}. Current wallet: **${currentBalance.toLocaleString()} rubles**.`
                 );
             }
 
-            // Subtracting gold from the user's balance
+            // Subtracting rubles from the user's balance
             await profileModel.findOneAndUpdate(
                 { userId: user.id },
                 { $inc: { balance: -amount } }
@@ -96,7 +96,7 @@ module.exports = {
 
             // Mentioning the user and replying with the updated balance
             await interaction.editReply(
-                `${amount} rubles have been removed from ${username}'s balance. New wallet: **${updatedBalance} gold**.`
+                `${amount} rubles have been removed from ${username}'s balance. New wallet: **${updatedBalance} rubles**.`
             );
         }
     },

@@ -46,8 +46,6 @@ for (const file of commandFiles) {
 }
 
 mongoose.connect(database, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
 }).then(() => {
     console.log("Connected to database");
 }).catch((err) => {

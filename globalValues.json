@@ -1,4 +1,4 @@
 {
-    "dailyMin": 1,
-    "dailyMax": 10
+    "dailyMin": 1000,
+    "dailyMax": 5000
 }

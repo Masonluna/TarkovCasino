@@ -1,5 +1,5 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
-
+const { SlashCommandBuilder, MessageFlags } = require("discord.js");
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder } = require("@discordjs/builders");
 
 const activeBets = new Map();
 
@@ -10,13 +10,18 @@ module.exports = {
         (option) =>
             option
                 .setName("bet")
-                .setDescription("Choose the amount you want to bet (Range: ")
-                .setMaxValue(1000000000)
-                .setMinValue(1000000)
+                .setDescription("Choose the amount you want to bet")
                 .setRequired(true)
     ),
 
     async execute(interaction, profileData) {
+        if (interaction.channel.name !== "blackjack") {
+            return interaction.reply({
+                flags: MessageFlags.Ephemral,
+                content: `Blackjack can only be played in the blackjack channel!`
+            });
+        }
+
         const { id } = interaction.user;
         const { balance } = profileData;
         const nickname = interaction.member?.nickname;
@@ -26,7 +31,7 @@ module.exports = {
             return interaction.reply(`You already have a game in progress! Finish it before starting a new one.`);
         }
 
-        activeBets.set(id, interaction.options.getInteger("amount"));
+        activeBets.set(id, interaction.options.getInteger("bet"));
         try {
             if (!isValidBet(activeBets.get(id), balance)) {
                 await interaction.deferReply({ ephemeral: true });
@@ -69,7 +74,7 @@ module.exports = {
                             Dealer's hand: ${displayHand(dealerHand, true, true)}\n\n
                             Double Natural Blackjack! Tie    
                         `)
-                        .setFooter({ text: `Your updated wallet: ${profileData.balance.toLocaleString}` });
+                        .setFooter({ text: `Your updated wallet: ${profileData.balance.toLocaleString()}` });
 
                     return await interaction.editReply({ embeds: [gameEmbed] });
                 } else {
@@ -109,12 +114,12 @@ module.exports = {
             let finalHand2 = null;
             let canDoubleDown = true;
 
-            finalHand0 = await playerHand(username, playerHand, dealerHand, deck, canSplit, canDoubleDown, interaction, profileData, "Main");
+            finalHand0 = await playHand(id, username, playerHand, dealerHand, deck, canSplit, canDoubleDown, interaction, profileData, "Main");
 
             // If split
             if (finalHand0 === "split") {
-                finalHand1 = await playHand(username, [playerHand[0], deck.pop()], dealerHand, deck, false, false, interaction, profileData, "1");
-                finalHand2 = await playHand(username, [playerHand[1], deck.pop()], dealerHand, deck, false, false, interaction, profileData, "2");
+                finalHand1 = await playHand(id, username, [playerHand[0], deck.pop()], dealerHand, deck, false, false, interaction, profileData, "1");
+                finalHand2 = await playHand(id, username, [playerHand[1], deck.pop()], dealerHand, deck, false, false, interaction, profileData, "2");
             }
 
             dealerHand = await dealerPlay(dealerHand, deck);
@@ -145,8 +150,8 @@ module.exports = {
                     payout -= activeBets.get(id);
                 }
             }
-
             displayResults(finalHand0, finalHand1, finalHand2, dealerHand, results, profileData, interaction, payout);
+
 
         } finally {
             activeBets.delete(id);
@@ -157,7 +162,7 @@ module.exports = {
 
 }
 
-async function playHand(playerName, playerHand, dealerHand, deck, canSplit, canDoubleDown, interaction, profileData, handLabel) {
+async function playHand(id, playerName, playerHand, dealerHand, deck, canSplit, canDoubleDown, interaction, profileData, handLabel) {
 
     let description = "";
     if (handLabel === "Main") {
@@ -222,7 +227,7 @@ async function playHand(playerName, playerHand, dealerHand, deck, canSplit, canD
             }
             // Handle Split
             if (buttonId === "split") {
-                profileData.balance -= bet;
+                profileData.balance -= activeBets.get(id);
                 await profileData.save();
                 await buttonInteraction.update({ // Ensure the interaction is acknowledged here too
                     embeds: [gameEmbed],
@@ -237,9 +242,9 @@ async function playHand(playerName, playerHand, dealerHand, deck, canSplit, canD
                     embeds: [gameEmbed],
                     components: [],
                 });
-                profileData.balance -= bet;
+                profileData.balance -= activeBets.get(id);
                 await profileData.save();
-                bet *= 2;
+                activeBets.set(id, activeBets.get(id) * 2);
                 playerHand.push(deck.pop());
                 resolve(playerHand);
                 collector.stop();
@@ -281,7 +286,8 @@ function determineResult(playerHand, dealerHand) {
 }
 
 function displayResults(finalHand0, finalHand1, finalHand2, dealerHand, results, profileData, interaction, payout) {
-    const { username, id } = interaction.user;
+    const nickname = interaction.member?.nickname;
+    const username = nickname || interaction.user.globalName || interaction.user.username;
 
     let embedColor = 0x3d85c6;
 
@@ -306,7 +312,7 @@ function displayResults(finalHand0, finalHand1, finalHand2, dealerHand, results,
 
                 You ${results[0]}! ${payout}
                 `)
-            .setFooter({ text: `Your updated wallet: ${profileData.balance}` });
+            .setFooter({ text: `Your updated wallet: ${profileData.balance.toLocaleString()}` });
 
         interaction.editReply({ embeds: [gameEmbed], components: [] });
     } else {
@@ -322,7 +328,7 @@ function displayResults(finalHand0, finalHand1, finalHand2, dealerHand, results,
                 You ${results[2]} hand two!\n
                 Payout: ${payout}
                 `)
-            .setFooter({ text: `Your updated wallet: ${profileData.balance}` });
+            .setFooter({ text: `Your updated wallet: ${profileData.balance.toLocaleString()}` });
 
         interaction.editReply({ embeds: [gameEmbed], components: [] });
     }

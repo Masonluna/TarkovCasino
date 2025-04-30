@@ -1,10 +1,16 @@
-const { SlashCommandBuilder } = require("discord.js");
+const { SlashCommandBuilder, MessageFlags } = require("discord.js");
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("register")
         .setDescription("registers a new user"),
     async execute(interaction, profileData) {
+        if (interaction.channel.name !== "register") {
+            return interaction.reply({
+                flags: MessageFlags.Ephemral,
+                content: `If you'd like to register, you must do so in the register channel.`
+            });
+        }
         const { registered } = profileData;
         const nickname = interaction.member?.nickname;
         const username = nickname || interaction.user.globalName || interaction.user.username;
