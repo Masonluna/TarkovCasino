@@ -9,7 +9,7 @@ module.exports = {
         .addSubcommand((subcommand) =>
             subcommand
                 .setName("add")
-                .setDescription("Add rubles to a user's balance")
+                .setDescription("Add rubles to a user's wallet")
                 .addUserOption((option) =>
                     option
                         .setName("user")
@@ -27,7 +27,7 @@ module.exports = {
         .addSubcommand((subcommand) =>
             subcommand
                 .setName("subtract")
-                .setDescription("Subtract rubles from a user's balance")
+                .setDescription("Subtract rubles from a user's wallet")
                 .addUserOption((option) =>
                     option
                         .setName("user")
@@ -73,7 +73,7 @@ module.exports = {
 
             // Mentioning the user and replying with the updated balance
             await interaction.editReply(
-                `${amount} rubles have been added to ${username}'s balance. New balance: **${updatedBalance} rubles**.`
+                `${amount} rubles have been added to ${username}'s balance. New wallet: **${updatedBalance} rubles**.`
             );
         }
 
@@ -81,7 +81,7 @@ module.exports = {
             // Check if the user has enough gold to subtract
             if (currentBalance < amount) {
                 return await interaction.editReply(
-                    `${username} does not have enough rubles to subtract ${amount}. Current balance: **${currentBalance} gold**.`
+                    `${username} does not have enough rubles to subtract ${amount}. Current wallet: **${currentBalance} gold**.`
                 );
             }
 
@@ -96,7 +96,7 @@ module.exports = {
 
             // Mentioning the user and replying with the updated balance
             await interaction.editReply(
-                `${amount} rubles have been removed from ${username}'s balance. New balance: **${updatedBalance} gold**.`
+                `${amount} rubles have been removed from ${username}'s balance. New wallet: **${updatedBalance} gold**.`
             );
         }
     },

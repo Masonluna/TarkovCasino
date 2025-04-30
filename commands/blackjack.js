@@ -14,7 +14,6 @@ module.exports = {
                 .setMaxValue(1000000000)
                 .setMinValue(1000000)
                 .setRequired(true)
-                .set
     ),
 
     async execute(interaction, profileData) {
