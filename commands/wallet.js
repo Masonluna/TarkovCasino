@@ -5,12 +5,14 @@ module.exports = {
         .setName("wallet")
         .setDescription("Shows a user their wallet"),
     async execute(interaction, profileData) {
-        if (interaction.channel.name !== "wallet") {
+        /**
+         * Add this code if you want to only allow users to check their wallet in a specified channel.
+         * if (interaction.channel.name !== "wallet") {
             return interaction.reply({
                 flags: MessageFlags.Ephemeral,
                 content: `Wallets must be checked in the wallet channel!`
             });
-        }
+        }*/
         const { balance } = profileData;
         const nickname = interaction.member?.nickname;
         const username = nickname || interaction.user.globalName || interaction.user.username;

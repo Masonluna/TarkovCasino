@@ -21,9 +21,9 @@ module.exports = {
         const timeLeft = cooldown - (Date.now() - dailyLastUsed);
 
         if (timeLeft > 0) {
-            await interaction.deferReply({ ephemeral: true })
+            await interaction.deferReply({ flags: MessageFlags.Ephemeral })
             const { hours, minutes, seconds } = parseMilliseconds(timeLeft);
-            await interaction.editReply(`Clain your next daily in ${hours} hrs ${minutes} min ${seconds} sec`);
+            await interaction.editReply(`Claim your next daily in ${hours} hrs ${minutes} min ${seconds} sec`);
             return;
         }
 
@@ -46,6 +46,6 @@ module.exports = {
             console.log(err);
         }
 
-        await interaction.editReply(`You redeemed ${random} rubles!`)
+        await interaction.editReply(`You redeemed ${random} rubles! Updated wallet: ${profileData.balance}`);
     }
 };

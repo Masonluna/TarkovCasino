@@ -96,7 +96,7 @@ module.exports = {
 
             // Mentioning the user and replying with the updated balance
             await interaction.editReply(
-                `${amount} rubles have been removed from ${username}'s balance. New wallet: **${updatedBalance} rubles**.`
+                `${amount} rubles have been removed from ${username}'s balance. New wallet: **${updatedBalance.toLocaleString()} rubles**.`
             );
         }
     },
