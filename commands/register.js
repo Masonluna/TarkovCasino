@@ -19,7 +19,7 @@ module.exports = {
             profileData.registered = true;
             profileData.balance = 100000;
             await profileData.save();
-            await interaction.reply(`${username} has successfully registered. Welcome to the Tarkov Casino.\n You will start with an initial balance of 100,000 rubles`);
+            await interaction.reply(`${username} has successfully registered. Welcome to the Tarkov Casino.\n You will start with an initial balance of ₽100,000`);
         } else {
             await interaction.reply(`${username} has already registered.`);
         }

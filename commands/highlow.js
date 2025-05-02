@@ -28,6 +28,15 @@ module.exports = {
                 content: `You already have an active game!`
             });
         }
+
+        if (interaction.options.getInteger("bet") > profileData.balance) {
+            return interaction.reply({
+                flags: MessageFlags.Ephemeral,
+                content: `You don't have enough rubles to bet ₽${interaction.options.getInteger("bet").toLocaleString()}. You only have ₽${profileData.balance.toLocaleString()}`
+            });
+        }
+
+
         activeBets.set(id, interaction.options.getInteger("bet"));
         const roll = Math.floor(Math.random() * 43);
 
@@ -35,7 +44,7 @@ module.exports = {
             profileData.balance -= activeBets.get(id);
             await profileData.save();
             await interaction.reply({
-                content: `🎲 Dealer rolls 21, automatic loss! -${activeBets.get(id)} rubles.`
+                content: `🎲 Dealer rolls **21**, automatic loss! -₽${activeBets.get(id)}.`
             });
             activeBets.delete(id);
         } else {
@@ -72,19 +81,31 @@ module.exports = {
                     if ((buttonId === "guess_higher" && roll2 > roll) || (buttonId === "guess_lower" && roll2 < roll)) {
                         profileData.balance += activeBets.get(id);
                         await interaction.followUp({
-                            content: `🎲 The dealer rolled **${roll2}**. You win! +${activeBets.get(id)} rubles`
+                            content: `🎲 The dealer rolled **${roll2}**. You win! +₽${activeBets.get(id)}`
                         });
                     } else {
                         profileData.balance -= activeBets.get(id);
                         await interaction.followUp({
-                            content: `🎲 The dealer rolled **${roll2}**. You lose! -${activeBets.get(id)} rubles`
+                            content: `🎲 The dealer rolled **${roll2}**. You lose! -₽${activeBets.get(id)}`
                         });
                     }
-                })
+
+                    activeBets.delete(id);
+                    resolve();
+                });
+
+                collector.on("end", (_, reason) => {
+                    if (reason !== "collect") {
+                        interaction.editReply({
+                            content: `You took too long to respond! Ending game...`,
+                        }).catch(console.error);
+                        activeBets.delete(id);
+
+                        reject(new Error("User did not respond in time"));
+                    }
+                });
 
             });
         }
-
-        activeBets.delete(id);
     }
 };

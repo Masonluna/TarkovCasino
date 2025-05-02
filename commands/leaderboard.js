@@ -19,13 +19,19 @@ module.exports = {
             return interaction.editReply("Leaderboard is empty!");
         }
 
+        const memberFetchPromises = topProfiles.map(profile =>
+            interaction.guild.members.fetch(profile.userId).catch(() => null)
+        );
+        const memberObjects = await Promise.all(memberFetchPromises);
+
         const leaderboardText = topProfiles.map((profile, index) => {
-            const userTag = `<@${profile.userId}>`; // Mentions the user
-            return `**${index + 1}.** ${userTag} — 💰 ${profile.balance.toLocaleString()}`;
+            const member = memberObjects[index];
+            const displayName = member ? member.displayName : `Unknown User (${profile.userId})`;
+            return `## **${index + 1}.** ${displayName} — **₽**${profile.balance.toLocaleString()}`;
         }).join('\n');
 
         await interaction.editReply({
-            content: `🏆 **Leaderboard - Top 10**\n\n${leaderboardText}`
+            content: `# 🏆 **Leaderboard - Top 10**\n\n${leaderboardText}`
         });
     }
 };

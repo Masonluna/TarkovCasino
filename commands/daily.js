@@ -46,6 +46,6 @@ module.exports = {
             console.log(err);
         }
 
-        await interaction.editReply(`You redeemed ${random} rubles! Updated wallet: ${profileData.balance}`);
+        await interaction.editReply(`You redeemed ₽${random}! Updated wallet: **₽${profileData.balance + random}**`);
     }
 };

@@ -35,7 +35,7 @@ module.exports = {
         try {
             if (!isValidBet(activeBets.get(id), balance)) {
                 await interaction.deferReply({ ephemeral: true });
-                return await interaction.editReply(`You don't have ${activeBets.get(id)} rubles to bet with`);
+                return await interaction.editReply(`You don't have ₽${activeBets.get(id).toLocaleString()} to bet with`);
             } else {
                 // Take their money out of the balance first to avoid exploitation
                 profileData.balance -= activeBets.get(id);
@@ -87,9 +87,9 @@ module.exports = {
                         .setDescription(`
                             Your hane: ${displayHand(playerHand)}\n
                             Dealer's hand: ${displayHand(dealerHand, true, true)}\n\n
-                            Natural Blackjack! You win! +${payout.toLocaleString()} rubles.
+                            Natural Blackjack! You win! +₽${payout.toLocaleString()}.
                         `)
-                        .setFooter({ text: `Your updated wallet: ${profileData.balance.toLocaleString()} rubles` });
+                        .setFooter({ text: `Your updated wallet: ₽${profileData.balance.toLocaleString()}` });
 
                     return await interaction.editReply({ embeds: [gameEmbed] });
                 }
@@ -100,9 +100,9 @@ module.exports = {
                     .setDescription(`
                         Your hand: ${displayHand(playerHand)}\n
                         Dealer's Hand: ${displayHand(dealerHand, true, true)}\n\n
-                        Dealer Natural Blackjack! You lose! -${activeBets.get(id).toLocaleString()} rubles.
+                        Dealer Natural Blackjack! You lose! -₽${activeBets.get(id).toLocaleString()}.
                     `)
-                    .setFooter({ text: `Your updated wallet: ${profileData.balance.toLocaleString()}` });
+                    .setFooter({ text: `Your updated wallet: ₽${profileData.balance.toLocaleString()}` });
 
                 return await interaction.editReply({ embeds: [gameEmbed] });
             }
@@ -292,13 +292,13 @@ function displayResults(finalHand0, finalHand1, finalHand2, dealerHand, results,
     let embedColor = 0x3d85c6;
 
     if (payout > 0) {
-        payout = `+${payout.toLocaleString()} rubles.`;
+        payout = `+₽${payout.toLocaleString()}.`;
         embedColor = 0x00aa6d;
     } else if (payout === 0) {
         payout = "";
         embedColor = 0xebeb55;
     } else {
-        payout = `${payout.toLocaleString()} rubles.`;
+        payout = `₽${payout.toLocaleString()}.`;
         embedColor = 0xdd1111;
     }
 

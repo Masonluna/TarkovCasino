@@ -47,7 +47,7 @@ module.exports = {
         const adminSubcommand = interaction.options.getSubcommand();
         const user = interaction.options.getUser("user");
         const amount = interaction.options.getInteger("amount");
-        const nickname = interaction.member?.nickname;
+        const nickname = user.nickname;
         const username = nickname || user.globalName || user.username
 
         // Get the user's profile data from the database
@@ -73,7 +73,7 @@ module.exports = {
 
             // Mentioning the user and replying with the updated balance
             await interaction.editReply(
-                `${amount} rubles have been added to ${username}'s balance. New wallet: **${updatedBalance.toLocaleString()} rubles**.`
+                `₽${amount} have been added to ${username}'s balance. New wallet: **₽${updatedBalance.toLocaleString()}**.`
             );
         }
 
@@ -81,7 +81,7 @@ module.exports = {
             // Check if the user has enough rubles to subtract
             if (currentBalance < amount) {
                 return await interaction.editReply(
-                    `${username} does not have enough rubles to subtract ${amount}. Current wallet: **${currentBalance.toLocaleString()} rubles**.`
+                    `${username} does not have enough rubles to subtract ₽${amount}. Current wallet: **₽${currentBalance.toLocaleString()}**.`
                 );
             }
 
@@ -96,7 +96,7 @@ module.exports = {
 
             // Mentioning the user and replying with the updated balance
             await interaction.editReply(
-                `${amount} rubles have been removed from ${username}'s balance. New wallet: **${updatedBalance.toLocaleString()} rubles**.`
+                `₽${amount} have been removed from ${username}'s balance. New wallet: **₽${updatedBalance.toLocaleString()}**.`
             );
         }
     },
