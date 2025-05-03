@@ -18,26 +18,27 @@ module.exports = {
         const { id } = interaction.user;
         if (interaction.channel.name !== "high-low") {
             return interaction.reply({
-                flags: MessageFlags.Ephemral,
+                flags: MessageFlags.Ephemeral,
                 content: `High-Low can only be played in the high-low channel!`
             });
         }
         if (activeBets.get(id)) {
             return interaction.reply({
-                flags: MessageFlags.Ephemral,
+                flags: MessageFlags.Ephemeral,
                 content: `You already have an active game!`
             });
         }
 
-        if (interaction.options.getInteger("bet") > profileData.balance) {
+        const betAmount = interaction.options.getInteger("bet");
+
+        if (betAmount > profileData.balance) {
             return interaction.reply({
                 flags: MessageFlags.Ephemeral,
-                content: `You don't have enough rubles to bet ₽${interaction.options.getInteger("bet").toLocaleString()}. You only have ₽${profileData.balance.toLocaleString()}`
+                content: `You don't have enough rubles to bet ₽${betAmount.toLocaleString()}. You only have ₽${profileData.balance.toLocaleString()}`
             });
         }
 
-
-        activeBets.set(id, interaction.options.getInteger("bet"));
+        activeBets.set(id, betAmount);
 
         try {
             const roll = Math.floor(Math.random() * 42) + 1;
@@ -65,24 +66,26 @@ module.exports = {
                 await interaction.reply({
                     content: `🎲 The dealer rolled **${roll}**. Will the next number be higher or lower?`,
                     components: [row],
-                    fetchReply: true
+                });
+                const message = await interaction.fetchReply();
+
+                const collector = message.createMessageComponentCollector({
+                    filter: (i) => i.user.id === interaction.user.id,
+                    time: 90000,
+                    max: 1
                 });
 
-                const roll2 = Math.floor(Math.random() * 42) + 1;
-
-                try {
-                    const buttonInteraction = await Response.awaitMessageComponent({
-                        filter: (i) => i.user.id === interaction.user.id,
-                        time: 90000
-                    });
+                collector.on('collect', async (buttonInteraction) => {
+                    const roll2 = Math.floor(Math.random() * 42) + 1;
+                    const userChoice = buttonInteraction.customId.replace('guess_', '');
 
                     await buttonInteraction.update({
-                        content: `🎲 The dealer rolled **${roll}**. You chose ${buttonInteraction.customId.replace('guess_', '')}...`,
+                        content: `🎲 The dealer rolled **${roll}**. You chose ${userChoice}...`,
                         components: []
                     });
 
                     let resultMessage;
-                    if ((buttonInteraction.customId === "guess_higher" && roll2 > roll) || 
+                    if ((buttonInteraction.customId === "guess_higher" && roll2 > roll) ||
                         (buttonInteraction.customId === "guess_lower" && roll2 < roll)) {
                         // Win
                         profileData.balance += betAmount;
@@ -95,23 +98,29 @@ module.exports = {
                         profileData.balance -= betAmount;
                         resultMessage = `🎲 The dealer rolled **${roll2}**. You lose! -₽${betAmount.toLocaleString()}`;
                     }
-                    
+
                     await profileData.save();
-                    await interaction.followUp({ content: resultMessage }); 
-                } catch (err) {
-                    await interaction.editReply({
-                        content: `You took too long to respond! Ending game...`,
-                        components: []
-                    });
-                }
-                
+                    await interaction.followUp({ content: resultMessage });
+                    activeBets.delete(id);
+                });
+
+                collector.on('end', async (collected) => {
+                    if (collected.size === 0) {
+                        await interaction.editReply({
+                            content: `You took too long to respond! Ending game...`,
+                            components: []
+                        });
+                        activeBets.delete(id);
+                    }
+                });
             }
         } catch (error) {
             console.error(error);
             await interaction.reply({
                 content: "There was an error while executing this command!",
                 flags: MessageFlags.Ephemeral
-            })
+            });
+            activeBets.delete(id);
         }
     }
 };
