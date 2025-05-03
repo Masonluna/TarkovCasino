@@ -38,74 +38,80 @@ module.exports = {
 
 
         activeBets.set(id, interaction.options.getInteger("bet"));
-        const roll = Math.floor(Math.random() * 43);
 
-        if (roll === 21) {
-            profileData.balance -= activeBets.get(id);
-            await profileData.save();
-            await interaction.reply({
-                content: `🎲 Dealer rolls **21**, automatic loss! -₽${activeBets.get(id)}.`
-            });
-            activeBets.delete(id);
-        } else {
-            const row = new ActionRowBuilder()
-                .addComponents(
-                    new ButtonBuilder()
-                        .setCustomId(`guess_higher`)
-                        .setLabel(`High`)
-                        .setStyle(ButtonStyle.Success),
-                    new ButtonBuilder()
-                        .setCustomId(`guess_lower`)
-                        .setLabel(`Low`)
-                        .setStyle(ButtonStyle.Danger)
-                );
+        try {
+            const roll = Math.floor(Math.random() * 42) + 1;
 
-            await interaction.reply({
-                content: `🎲 The dealer rolled **${roll}**. Will the next number be higher or lower?`,
-                components: [row],
-            });
-
-            const roll2 = Math.floor(Math.random() * 43);
-            return new Promise((resolve, reject) => {
-                // Collector
-                const filter = (i) => i.user.id === interaction.user.id;
-                const collector = interaction.channel.createMessageComponentCollector({
-                    filter,
-                    time: 90000
+            if (roll === 21) {
+                profileData.balance -= activeBets.get(id);
+                await profileData.save();
+                await interaction.reply({
+                    content: `🎲 Dealer rolls **21**, automatic loss! -₽${activeBets.get(id)}.`
                 });
-                collector.on("collect", async (buttonInteraction) => {
-                    const buttonId = buttonInteraction.customId;
-                    await interaction.editReply({
+                activeBets.delete(id);
+            } else {
+                const row = new ActionRowBuilder()
+                    .addComponents(
+                        new ButtonBuilder()
+                            .setCustomId(`guess_higher`)
+                            .setLabel(`High`)
+                            .setStyle(ButtonStyle.Success),
+                        new ButtonBuilder()
+                            .setCustomId(`guess_lower`)
+                            .setLabel(`Low`)
+                            .setStyle(ButtonStyle.Danger)
+                    );
+
+                await interaction.reply({
+                    content: `🎲 The dealer rolled **${roll}**. Will the next number be higher or lower?`,
+                    components: [row],
+                    fetchReply: true
+                });
+
+                const roll2 = Math.floor(Math.random() * 42) + 1;
+
+                try {
+                    const buttonInteraction = await Response.awaitMessageComponent({
+                        filter: (i) => i.user.id === interaction.user.id,
+                        time: 90000
+                    });
+
+                    await buttonInteraction.update({
+                        content: `🎲 The dealer rolled **${roll}**. You chose ${buttonInteraction.customId.replace('guess_', '')}...`,
                         components: []
                     });
-                    if ((buttonId === "guess_higher" && roll2 > roll) || (buttonId === "guess_lower" && roll2 < roll)) {
-                        profileData.balance += activeBets.get(id);
-                        await interaction.followUp({
-                            content: `🎲 The dealer rolled **${roll2}**. You win! +₽${activeBets.get(id)}`
-                        });
+
+                    let resultMessage;
+                    if ((buttonInteraction.customId === "guess_higher" && roll2 > roll) || 
+                        (buttonInteraction.customId === "guess_lower" && roll2 < roll)) {
+                        // Win
+                        profileData.balance += betAmount;
+                        resultMessage = `🎲 The dealer rolled **${roll2}**. You win! +₽${betAmount.toLocaleString()}`;
+                    } else if (roll2 === roll) {
+                        // Tie
+                        resultMessage = `🎲 The dealer rolled **${roll2}**. It's a tie! Your bet is returned.`;
                     } else {
-                        profileData.balance -= activeBets.get(id);
-                        await interaction.followUp({
-                            content: `🎲 The dealer rolled **${roll2}**. You lose! -₽${activeBets.get(id)}`
-                        });
+                        // Loss
+                        profileData.balance -= betAmount;
+                        resultMessage = `🎲 The dealer rolled **${roll2}**. You lose! -₽${betAmount.toLocaleString()}`;
                     }
-
-                    activeBets.delete(id);
-                    resolve();
-                });
-
-                collector.on("end", (_, reason) => {
-                    if (reason !== "collect") {
-                        interaction.editReply({
-                            content: `You took too long to respond! Ending game...`,
-                        }).catch(console.error);
-                        activeBets.delete(id);
-
-                        reject(new Error("User did not respond in time"));
-                    }
-                });
-
-            });
+                    
+                    await profileData.save();
+                    await interaction.followUp({ content: resultMessage }); 
+                } catch (err) {
+                    await interaction.editReply({
+                        content: `You took too long to respond! Ending game...`,
+                        components: []
+                    });
+                }
+                
+            }
+        } catch (error) {
+            console.error(error);
+            await interaction.reply({
+                content: "There was an error while executing this command!",
+                flags: MessageFlags.Ephemeral
+            })
         }
     }
 };
